@@ -33,18 +33,14 @@ user 'fluent' do
   action   [:create, :manage]
 end
 
-directory '/etc/fluent/' do
-  owner  'fluent'
-  group  'fluent'
-  mode   '0755'
-  action :create
-end
 
-directory '/var/log/fluent/' do
-  owner  'fluent'
-  group  'fluent'
-  mode   '0755'
-  action :create
+%w{ /etc/fluent/ /etc/fluent/config.d/ /var/log/fluent/ }.each do |dir|
+  directory dir do
+    owner  'fluent'
+    group  'fluent'
+    mode   '0755'
+    action :create
+  end
 end
 
 template "/etc/fluent/fluent.conf" do
@@ -64,3 +60,28 @@ service "fluent" do
   subscribes :restart, resources(:template => "/etc/fluent/fluent.conf")
 end
 
+node[:fluentd][:plugins].each do |plugin|
+  gem_package "fluent-plugin-#{plugin}"
+end
+
+#
+# Handle sources and matches configuration
+# 
+if node[:fluentd][:configs]
+  node[:fluentd][:configs][:source].each do |config|
+    template "#{config[:tag]}" do
+      path      "/etc/fluent/config.d/source_#{config[:tag]}.conf"
+      source    "plugin_source.conf.erb"
+      variables config
+    end
+  end
+  
+  node[:fluentd][:configs][:match].each do |config|
+    cfg = config.dup
+    template "#{cfg[:match]}" do
+      path      "/etc/fluent/config.d/match_#{cfg[:match]}.conf"
+      source    "plugin_match.conf.erb"
+      variables({ :match => cfg.delete(:match), :type => cfg.delete(:type), :attributes => cfg })
+    end
+  end
+end

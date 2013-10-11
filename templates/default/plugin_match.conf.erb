@@ -1,0 +1,5 @@
+<match <%= @match %>>
+     type   <%= @type %>
+     <% @attributes.keys.each do |key| -%>	<%= key -%>		<%= @attributes[key] %>
+     <% end -%>
+</match>
