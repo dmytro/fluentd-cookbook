@@ -4,7 +4,7 @@ maintainer_email 'dmytro.kovalov@gmail.com'
 license          'MIT'
 description      'Installs/Configures fluentd'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
-version          '0.0.3'
+version          '0.0.4'
 
 %w{redhat centos debian ubuntu}.each do |os|
   supports os

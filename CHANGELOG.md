@@ -3,6 +3,11 @@ fluentd CHANGELOG
 
 This file is used to list changes made in each version of the fluentd cookbook.
 
+0.0.4
+-----
+- Dmytro Kovalov - fix
+  init.d file for Ubuntu
+
 0.0.3
 -----
 - Dmytro Kovalov - fix

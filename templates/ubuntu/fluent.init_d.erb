@@ -1,0 +1,113 @@
+#!/bin/bash
+#
+# /etc/rc.d/init.d/fluent
+#
+# chkconfig: - 80 20
+# description: fluent
+# processname: fluent
+# pidfile: /var/run/fluent/fluent.pid
+#
+### BEGIN INIT INFO
+# Provides:          fluent
+# Default-Stop:      0 1 6
+# Required-Start:    $local_fs
+# Required-Stop:     $local_fs
+# Short-Description: fluent's init script
+# Description:       fluent is a data collector
+### END INIT INFO
+
+# Source function library.
+. /lib/lsb/init-functions
+
+name="fluent"
+prog="fluent"
+
+if [ -f /etc/default/$prog ]; then
+	. /etc/default/$prog
+fi
+
+test -f /usr/local/rvm/environments/default && { source /usr/local/rvm/environments/default;  }
+
+PIDFILE=${PIDFILE-/var/run/fluent/$prog.pid}
+DAEMON_ARGS=${DAEMON_ARGS---user fluent  --group fluent}
+FLUENTD_ARGS="${FLUENTD_ARGS---log /var/log/fluent/fluent.log}"
+CONF_FILE=/etc/fluent/fluent.conf
+
+if [ -n "${PIDFILE}" ]; then
+	mkdir -p $(dirname ${PIDFILE})
+	chown -R fluent:fluent $(dirname ${PIDFILE})
+	FLUENTD_ARGS="${FLUENTD_ARGS} --daemon ${PIDFILE}"
+fi
+
+
+RETVAL=0
+
+start() {
+	echo -n "Starting $name: "
+	fluentd $DAEMON_ARGS --config $CONF_FILE $FLUENTD_ARGS -vv
+#	start-stop-daemon --start --pidfile $PIDFILE $DAEMON_ARGS --exec fluentd "$FLUENTD_ARGS"
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch /var/lock/$prog
+	return $RETVAL
+}
+
+stop() {
+	echo -n "Shutting down $name: "
+	if [ -e "${PIDFILE}" ]; then
+		killproc -p ${PIDFILE} || killproc $prog
+	else
+		killproc $prog
+	fi
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f $PIDFILE && rm -f /var/lock/$prog
+	return $RETVAL
+}
+
+restart() {
+	configtest || return $?
+	stop
+	start
+}
+
+reload() {
+	configtest || return $?
+	echo -n "Reloading $name: "
+	killproc $fluentd -HUP
+	RETVAL=$?
+	echo
+}
+
+configtest() {
+	fluent --user fluent --group fluent --dry-run -q
+}
+
+case "$1" in
+    start)
+	start
+	;;
+    stop)
+	stop
+	;;
+    restart)
+	restart
+	;;
+    reload)
+	reload
+	;;
+    condrestart)
+	[ -f /var/lock/$prog ] && restart || :
+	;;
+    configtest)
+        configtest
+        ;;
+    status)
+	status -p $PIDFILE 'fluent'
+	;;
+    *)
+	echo "Usage: $prog {start|stop|reload|restart|condrestart|status|configtest}"
+	exit 1
+	;;
+esac
+exit $?

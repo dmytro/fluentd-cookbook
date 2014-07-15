@@ -66,7 +66,7 @@ end
 
 #
 # Handle sources and matches configuration
-# 
+#
 if node[:fluentd][:configs]
   node[:fluentd][:configs][:source].each do |config|
     template "#{config[:tag]}" do
@@ -76,7 +76,7 @@ if node[:fluentd][:configs]
       notifies :restart, "service[fluent]", :immediately
     end
   end
-  
+
   node[:fluentd][:configs][:match].each do |config|
     cfg = config.dup
     template "#{cfg[:match]}" do
