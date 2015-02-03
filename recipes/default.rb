@@ -56,8 +56,8 @@ end
 gem_package "fluentd"
 
 service "fluent" do
-  action [ :enable, :start, :restart ]
-  subscribes :restart, resources(:template => "/etc/fluent/fluent.conf")
+  action :nothing
+  supports [ :enable, :start, :restart ]
 end
 
 node[:fluentd][:plugins].each do |plugin|
@@ -73,7 +73,7 @@ if node[:fluentd][:configs]
       path      "/etc/fluent/config.d/source_#{config[:tag]}.conf"
       source    "plugin_source.conf.erb"
       variables config
-      notifies :restart, "service[fluent]", :immediately
+      notifies :restart, "service[fluent]", :delayed
     end
   end
 
@@ -83,7 +83,7 @@ if node[:fluentd][:configs]
       path      "/etc/fluent/config.d/match_#{cfg[:match]}.conf"
       source    "plugin_match.conf.erb"
       variables({ :match => cfg.delete(:match), :type => cfg.delete(:type), :attributes => cfg })
-      notifies :restart, "service[fluent]", :immediately
+      notifies :restart, "service[fluent]", :delayed
     end
   end
 end

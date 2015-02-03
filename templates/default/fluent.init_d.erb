@@ -78,7 +78,7 @@ reload() {
 }
 
 configtest() {
-	fluent --user fluent --group fluent --dry-run -q
+	fluentd --user fluent --group fluent --dry-run -q
 }
 
 case "$1" in
